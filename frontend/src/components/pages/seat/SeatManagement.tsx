@@ -36,10 +36,7 @@ const MOCK_CHAIRS: Record<number, Chair[]> = {
   3: generateChairs(3),
 }
 
-const PRICE: Record<SeatCategory, number> = {
-  Normal: 28,
-  VIP: 48,
-}
+
 
 function seatClasses(chair: Chair, selected: string | null): string {
   const isSel = selected === chair.id
@@ -47,7 +44,7 @@ function seatClasses(chair: Chair, selected: string | null): string {
   const isVip = chair.category === "VIP"
 
   const base =
-    "relative w-11 h-11 rounded-xl font-bold text-xs flex items-center justify-center border-[1.5px] cursor-pointer transition-transform"
+    "relative w-11 h-11 sm:w-13 sm:h-13 md:w-16 md:h-16 rounded-xl font-bold text-sm flex items-center justify-center border-[1.5px] cursor-pointer transition-transform"
 
   if (isSel)
     return `${base} bg-amber-500 border-amber-400 text-white scale-110 shadow-lg shadow-amber-500/30`
@@ -86,6 +83,7 @@ export default function SeatScreen() {
 
   const available = chairs.filter(c => c.status === "available").length
   const occupied = chairs.filter(c => c.status === "occupied").length
+  const vip = chairs.filter(c => c.category === "VIP" && c.status === "available").length
 
   function handleSelect(id: string): void {
     setSelected(prev => (prev === id ? null : id))
@@ -122,75 +120,77 @@ export default function SeatScreen() {
     <div className="min-h-screen bg-zinc-950 font-serif">
 
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-40 bg-zinc-950/95 border-b border-zinc-900 px-6 py-4 flex items-center">
+      <nav className="sticky top-0 z-40 bg-zinc-950/95 border-b border-zinc-900 px-4 sm:px-6 py-3 sm:py-4 flex items-center">
 
-          {/* Botão esquerdo */}
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-1.5 bg-white/5 border border-zinc-800 text-zinc-400 text-xs px-3.5 py-2 rounded-xl hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <ArrowLeft size={13} />
-            Sessões
-          </button>
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1.5 bg-white/5 border border-zinc-800 text-zinc-400 text-xs px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl hover:text-white hover:bg-white/10 transition-colors shrink-0"
+        >
+          <ArrowLeft size={13} />
+          <span className="hidden sm:inline">Sessões</span>
+        </button>
 
-          {/* Título central absoluto */}
-          <div className="absolute left-1/2 -translate-x-1/2 text-center">
-            <span className="block text-white font-bold text-sm">
-              {session.movie}
-            </span>
+        <div className="absolute left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-xs">
+          <span className="block text-white font-bold text-xs sm:text-sm truncate">
+            {session.movie}
+          </span>
+          <span className="text-zinc-500 text-[10px] sm:text-xs truncate block">
+            {formatTime(session.start_time)} · {room?.name}
+          </span>
+        </div>
 
-            <span className="text-zinc-500 text-xs">
-              {formatTime(session.start_time)} · {room?.name}
-            </span>
-          </div>
-
-        </nav>
+      </nav>
 
       {/* BODY */}
-      <div className="max-w-2xl mx-auto px-5 py-8">
+      <div className="max-w-2xl mx-auto px-3 sm:px-5 py-5 sm:py-8">
 
         {/* STATS */}
-        <div className="flex gap-4 justify-center mb-8">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
 
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl px-6 py-3.5 text-center">
-            <p className="text-2xl font-bold text-emerald-400">{available}</p>
-            <p className="text-zinc-500 text-[11px] mt-0.5">Disponíveis</p>
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2.5 sm:py-3.5 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-emerald-400">{available}</p>
+            <p className="text-zinc-500 text-[9px] sm:text-[11px] mt-0.5">Disponíveis</p>
           </div>
 
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl px-6 py-3.5 text-center">
-            <p className="text-2xl font-bold text-red-400">{occupied}</p>
-            <p className="text-zinc-500 text-[11px] mt-0.5">Ocupados</p>
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2.5 sm:py-3.5 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-red-400">{occupied}</p>
+            <p className="text-zinc-500 text-[9px] sm:text-[11px] mt-0.5">Ocupados</p>
+          </div>
+
+          <div className="bg-zinc-900/80 border border-amber-900/40 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2.5 sm:py-3.5 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-amber-400">{vip}</p>
+            <p className="text-zinc-500 text-[9px] sm:text-[11px] mt-0.5">VIP livres</p>
           </div>
 
         </div>
 
         {/* SCREEN */}
-        <div className="text-center mb-7">
+        <div className="text-center mb-5 sm:mb-7">
           <div className="h-1 bg-linear-to-r from-transparent via-amber-500/60 to-transparent rounded-full mb-2" />
-          <span className="text-zinc-600 text-[11px] tracking-[3px] uppercase">
+          <span className="text-zinc-600 text-[10px] sm:text-[11px] tracking-[3px] uppercase">
             Assentos
           </span>
         </div>
 
         {/* SEATS */}
-        <div className="flex flex-col gap-2 mb-8">
+        <div className="flex flex-col gap-1.5 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto pb-2">
 
           {rows.map(row => {
             const rowChairs = chairs.filter(c => c.row === row)
             const isVipRow = rowChairs[0]?.category === "VIP"
 
             return (
-              <div key={row} className="flex items-center justify-center gap-2">
+              <div key={row} className="flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
 
                 <span
-                  className={`w-4 text-right text-[11px] font-bold shrink-0 ${
+                  className={`w-4 sm:w-5 text-right text-[10px] sm:text-xs font-bold shrink-0 ${
                     isVipRow ? "text-amber-500" : "text-zinc-600"
                   }`}
                 >
                   {row}
                 </span>
 
-                <div className="flex gap-1.5 flex-wrap justify-center">
+                <div className="flex gap-1 sm:gap-2 justify-center flex-wrap">
 
                   {rowChairs.map(chair => {
                     const isSel = selected === chair.id
@@ -208,13 +208,13 @@ export default function SeatScreen() {
                         {isVip && !isOcc && !isSel && (
                           <Crown
                             size={8}
-                            className="absolute top-0.5 right-0.5 text-amber-500"
+                            className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 text-amber-500"
                           />
                         )}
 
                         {isOcc && (
                           <X
-                            size={11}
+                            size={10}
                             className="absolute text-red-500 pointer-events-none"
                           />
                         )}
@@ -228,34 +228,58 @@ export default function SeatScreen() {
           })}
         </div>
 
+        {/* LEGEND */}
+        <div className="flex items-center justify-center gap-3 sm:gap-5 mb-5 sm:mb-6 flex-wrap">
+          {[
+            { color: "bg-emerald-500", label: "Disponível" },
+            { color: "bg-amber-700",   label: "VIP" },
+            { color: "bg-red-700",     label: "Ocupado" },
+            { color: "bg-amber-400",   label: "Selecionado" },
+          ].map(({ color, label }) => (
+            <span key={label} className="flex items-center gap-1.5 text-zinc-400 text-[10px] sm:text-xs">
+              <span className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${color} inline-block shrink-0`} />
+              {label}
+            </span>
+          ))}
+        </div>
+
         {/* SELECTED PANEL */}
         {selectedChair && (
-          <div className="bg-zinc-900/90 border border-zinc-700 rounded-2xl p-5">
+          <div className="bg-zinc-900/90 border border-zinc-700 rounded-2xl p-4 sm:p-5">
 
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3 sm:gap-4 mb-4">
 
-              <div>
-                <p className="text-white font-bold text-sm">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0">
+                {selectedChair.row}{selectedChair.number}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-white font-bold text-xs sm:text-sm mb-1.5">
                   Assento {selectedChair.row}{selectedChair.number}
                 </p>
 
-                <p className="text-zinc-500 text-xs">
-                  {selectedChair.category}
-                </p>
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <span className="border border-zinc-600 text-zinc-400 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 rounded-md">
+                    {selectedChair.category}
+                  </span>
+                  <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md border ${
+                    selectedChair.status === "available"
+                      ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
+                      : "bg-red-500/10 border-red-500/40 text-red-400"
+                  }`}>
+                    {selectedChair.status === "available" ? "Disponível" : "Ocupado"}
+                  </span>
+                </div>
               </div>
-
-              <p className="text-amber-400 font-bold text-xl">
-                R$ {PRICE[selectedChair.category]}
-              </p>
 
             </div>
 
             <button
               onClick={handleReserve}
               disabled={selectedChair.status === "occupied"}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm bg-linear-to-r from-amber-500 to-amber-600 text-white hover:scale-[1.02]"
+              className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 rounded-xl font-bold text-sm bg-linear-to-r from-amber-500 to-amber-600 text-white hover:scale-[1.02] transition-transform disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <Star size={16} />
+              <Star size={15} />
               Confirmar Reserva
             </button>
 
