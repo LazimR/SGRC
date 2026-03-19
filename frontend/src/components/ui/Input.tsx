@@ -43,18 +43,19 @@ export default function Input({
           {...rest}
           type={inputType}
           className={`
-            w-full px-3 py-3 rounded-lg border bg-slate-700/50 border-slate-600/50
+            w-full px-3 py-3 rounded-lg border bg-zinc-950 border-zinc-800
             text-white
-            placeholder:text-slate-400
+            placeholder:text-zinc-600
             ${leftIcon ? "pl-10" : ""}
             ${isPassword || rightIcon ? "pr-10" : ""}
-            ${error ? "border-amber-500" : ""}
-            focus:outline-none focus:ring-2 focus:ring-amber-400
-            [&:-webkit-autofill]:bg-slate-700/50!
+            ${error ? "border-amber-500" : "hover:border-zinc-700 focus:border-zinc-600"}
+            focus:outline-none focus:ring-2 focus:ring-amber-500/20
+            transition-colors
+            [&:-webkit-autofill]:bg-zinc-950!
             [&:-webkit-autofill]:[-webkit-text-fill-color:white]
-            [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0px_1000px_rgb(51_65_85/0.5)_inset]
-            [&:-webkit-autofill:hover]:[-webkit-box-shadow:0_0_0px_1000px_rgb(51_65_85/0.5)_inset]
-            [&:-webkit-autofill:focus]:[-webkit-box-shadow:0_0_0px_1000px_rgb(51_65_85/0.5)_inset]
+            [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0px_1000px_rgb(9_9_11)_inset]
+            [&:-webkit-autofill:hover]:[-webkit-box-shadow:0_0_0px_1000px_rgb(9_9_11)_inset]
+            [&:-webkit-autofill:focus]:[-webkit-box-shadow:0_0_0px_1000px_rgb(9_9_11)_inset]
           `}
         />
 

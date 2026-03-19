@@ -1,357 +1,291 @@
 import { useState } from "react"
-import { Film, ArrowLeft, Crown, Star, X, CheckCircle, AlertCircle } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
+import { Star, Crown, X, ArrowLeft } from "lucide-react"
 
-type SeatStatus = "available" | "occupied"
-type SeatCategory = "Normal" | "VIP"
+import { type Session } from "../../../types/session/session"
+import { type Chair, type SeatCategory, type SeatStatus } from "../../../types/chair/chair"
+import { type Room } from "../../../types/room/room"
+import { formatTime } from "../../../utils/formations"
 
-interface Seat {
-  id: string
-  status: SeatStatus
-  category: SeatCategory
-}
+const MOCK_ROOMS: Room[] = [
+  { id: 1, name: "Sala 1 — IMAX" },
+  { id: 2, name: "Sala 2 — 4DX" },
+  { id: 3, name: "Sala 3 — Standard" },
+]
 
-function generateSeats(): Seat[] {
+function generateChairs(roomId: number): Chair[] {
   const rows = ["A", "B", "C", "D", "E", "F"]
   const cols = [1, 2, 3, 4, 5, 6, 7, 8]
   const vipRows = ["A", "B"]
 
-  return rows.flatMap((row) =>
-    cols.map((col) => ({
-      id: `${row}${col}`,
-      status: Math.random() < 0.35 ? "occupied" : "available",
-      category: vipRows.includes(row) ? "VIP" : "Normal",
+  return rows.flatMap(row =>
+    cols.map(col => ({
+      id: `${roomId}-${row}${col}`,
+      room_id: roomId,
+      row,
+      number: col,
+      category: (vipRows.includes(row) ? "VIP" : "Normal") as SeatCategory,
+      status: (Math.random() < 0.3 ? "occupied" : "available") as SeatStatus,
     }))
   )
 }
 
-const initialSeats = generateSeats()
+const MOCK_CHAIRS: Record<number, Chair[]> = {
+  1: generateChairs(1),
+  2: generateChairs(2),
+  3: generateChairs(3),
+}
 
-type FlashMessage = { type: "success" | "error"; message: string } | null
 
-export default function SeatManagement() {
-  const [seats, setSeats] = useState<Seat[]>(initialSeats)
+
+function seatClasses(chair: Chair, selected: string | null): string {
+  const isSel = selected === chair.id
+  const isOcc = chair.status === "occupied"
+  const isVip = chair.category === "VIP"
+
+  const base =
+    "relative w-11 h-11 sm:w-13 sm:h-13 md:w-16 md:h-16 rounded-xl font-bold text-sm flex items-center justify-center border-[1.5px] cursor-pointer transition-transform"
+
+  if (isSel)
+    return `${base} bg-amber-500 border-amber-400 text-white scale-110 shadow-lg shadow-amber-500/30`
+
+  if (isOcc)
+    return `${base} bg-red-950/60 border-red-700/50 text-red-500`
+
+  if (isVip)
+    return `${base} bg-amber-950/60 border-amber-600/40 text-amber-400 hover:bg-amber-900/50`
+
+  return `${base} bg-emerald-950/60 border-emerald-700/40 text-emerald-400 hover:bg-emerald-900/40`
+}
+
+export default function SeatScreen() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const session = location.state?.session as Session | undefined
+
+  if (!session) {
+    navigate("/")
+    return null
+  }
+
+  const room = MOCK_ROOMS.find(r => r.id === session.room_id)
+
+  const [chairs, setChairs] = useState<Chair[]>(
+    () => [...(MOCK_CHAIRS[session.room_id] ?? [])]
+  )
+
   const [selected, setSelected] = useState<string | null>(null)
-  const [flash, setFlash] = useState<FlashMessage>(null)
-  const [filterStatus, setFilterStatus] = useState<"all" | SeatStatus>("all")
-  const [filterCategory, setFilterCategory] = useState<"all" | SeatCategory>("all")
 
-  function showFlash(type: "success" | "error", message: string) {
-    setFlash({ type, message })
-    setTimeout(() => setFlash(null), 3000)
+  const selectedChair = chairs.find(c => c.id === selected)
+
+  const rows: string[] = [...new Set(chairs.map(c => c.row))].sort()
+
+  const available = chairs.filter(c => c.status === "available").length
+  const occupied = chairs.filter(c => c.status === "occupied").length
+  const vip = chairs.filter(c => c.category === "VIP" && c.status === "available").length
+
+  function handleSelect(id: string): void {
+    setSelected(prev => (prev === id ? null : id))
   }
 
-  function handleSelect(seatId: string) {
-    setSelected((prev) => (prev === seatId ? null : seatId))
-  }
+  function handleReserve(): void {
+    if (!selectedChair || selectedChair.status === "occupied") return
 
-  function handleReserve() {
-    if (!selected) return
-    setSeats((prev) =>
-      prev.map((s) => (s.id === selected ? { ...s, status: "occupied" } : s))
+    setChairs(prev =>
+      prev.map(c =>
+        c.id === selectedChair.id ? { ...c, status: "occupied" } : c
+      )
     )
-    showFlash("success", `Assento ${selected} reservado com sucesso!`)
-    setSelected(null)
+
+    navigate("/confirmation", {
+      state: {
+        reservation: {
+          session,
+          chair: selectedChair,
+          user: {
+            id: 1,
+            name: "Cliente"
+          }
+        }
+      }
+    })
   }
 
-  function handleCancel() {
-    if (!selected) return
-    setSeats((prev) =>
-      prev.map((s) => (s.id === selected ? { ...s, status: "available" } : s))
-    )
-    showFlash("success", `Reserva do assento ${selected} cancelada!`)
-    setSelected(null)
+  function handleBack() {
+    navigate("/")
   }
-
-  const selectedSeat = seats.find((s) => s.id === selected)
-
-  const filtered = seats.filter((s) => {
-    const matchStatus = filterStatus === "all" || s.status === filterStatus
-    const matchCat = filterCategory === "all" || s.category === filterCategory
-    return matchStatus && matchCat
-  })
-
-  const rows = [...new Set(filtered.map((s) => s.id[0]))].sort()
-
-  const available = seats.filter((s) => s.status === "available").length
-  const occupied = seats.filter((s) => s.status === "occupied").length
-  const vip = seats.filter((s) => s.category === "VIP").length
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-black via-zinc-900 to-black flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-zinc-950 font-serif">
 
-      {/* Flash Message */}
-      {flash && (
-        <div
-          className={`
-            fixed top-6 right-6 z-50
-            flex items-center gap-3
-            px-5 py-4 rounded-xl
-            shadow-2xl border
-            transition-all duration-300
-            ${flash.type === "success"
-              ? "bg-zinc-900 border-green-500/40 text-green-400"
-              : "bg-zinc-900 border-red-500/40 text-red-400"
-            }
-          `}
+      {/* NAVBAR */}
+      <nav className="sticky top-0 z-40 bg-zinc-950/95 border-b border-zinc-900 px-4 sm:px-6 py-3 sm:py-4 flex items-center">
+
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1.5 bg-white/5 border border-zinc-800 text-zinc-400 text-xs px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl hover:text-white hover:bg-white/10 transition-colors shrink-0"
         >
-          {flash.type === "success"
-            ? <CheckCircle size={18} />
-            : <AlertCircle size={18} />
-          }
-          <span className="text-sm font-medium">{flash.message}</span>
+          <ArrowLeft size={13} />
+          <span className="hidden sm:inline">Sessões</span>
+        </button>
+
+        <div className="absolute left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-xs">
+          <span className="block text-white font-bold text-xs sm:text-sm truncate">
+            {session.movie}
+          </span>
+          <span className="text-zinc-500 text-[10px] sm:text-xs truncate block">
+            {formatTime(session.start_time)} · {room?.name}
+          </span>
         </div>
-      )}
 
-      <div className="w-full max-w-3xl">
-        <div className="bg-zinc-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-zinc-800 overflow-hidden">
+      </nav>
 
-          {/* Header */}
-          <div className="relative px-8 py-10 text-center">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full" />
+      {/* BODY */}
+      <div className="max-w-2xl mx-auto px-3 sm:px-5 py-5 sm:py-8">
 
-            <div className="relative flex justify-center mb-6">
-              <div className="w-16 h-16 bg-amber-600/20 border border-amber-500/30 rounded-2xl flex items-center justify-center">
-                <Film className="text-amber-500" size={32} />
-              </div>
-            </div>
+        {/* STATS */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
 
-            <h1 className="text-3xl font-bold text-white">CinemaReserve</h1>
-            <p className="text-zinc-400 text-sm mt-2">Gestão de Assentos</p>
-
-            {/* Stats */}
-            <div className="relative flex justify-center gap-6 mt-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-400">{available}</p>
-                <p className="text-xs text-zinc-500">Disponíveis</p>
-              </div>
-              <div className="w-px bg-zinc-700" />
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-400">{occupied}</p>
-                <p className="text-xs text-zinc-500">Ocupados</p>
-              </div>
-              <div className="w-px bg-zinc-700" />
-              <div className="text-center">
-                <p className="text-2xl font-bold text-amber-400">{vip}</p>
-                <p className="text-xs text-zinc-500">VIP</p>
-              </div>
-            </div>
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2.5 sm:py-3.5 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-emerald-400">{available}</p>
+            <p className="text-zinc-500 text-[9px] sm:text-[11px] mt-0.5">Disponíveis</p>
           </div>
 
-          <div className="px-8 pb-10 space-y-6">
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2.5 sm:py-3.5 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-red-400">{occupied}</p>
+            <p className="text-zinc-500 text-[9px] sm:text-[11px] mt-0.5">Ocupados</p>
+          </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap justify-center gap-3">
-              <div className="flex gap-2">
-                {(["all", "available", "occupied"] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilterStatus(f)}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-xs font-medium transition-all border
-                      ${filterStatus === f
-                        ? "bg-amber-500/20 border-amber-500/50 text-amber-400"
-                        : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
-                      }
-                    `}
-                  >
-                    {f === "all" ? "Todos" : f === "available" ? "Disponíveis" : "Ocupados"}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                {(["all", "Normal", "VIP"] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilterCategory(f)}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-xs font-medium transition-all border
-                      ${filterCategory === f
-                        ? "bg-amber-500/20 border-amber-500/50 text-amber-400"
-                        : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
-                      }
-                    `}
-                  >
-                    {f === "all" ? "Todas" : f}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="bg-zinc-900/80 border border-amber-900/40 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2.5 sm:py-3.5 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-amber-400">{vip}</p>
+            <p className="text-zinc-500 text-[9px] sm:text-[11px] mt-0.5">VIP livres</p>
+          </div>
 
-            {/* Screen indicator */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-full h-1.5 bg-linear-to-r from-transparent via-amber-500/60 to-transparent rounded-full" />
-              <span className="text-xs text-zinc-500 tracking-widest uppercase">Assentos</span>
-            </div>
+        </div>
 
-            {/* Seat Grid */}
-            <div className="space-y-2">
-              {rows.map((row) => {
-                const rowSeats = filtered.filter((s) => s.id[0] === row)
-                const isVipRow = rowSeats[0]?.category === "VIP"
-                return (
-                  <div key={row} className="flex items-center justify-center gap-3">
-                    <span className={`w-5 text-xs font-bold text-right ${isVipRow ? "text-amber-400" : "text-zinc-500"}`}>
-                      {row}
-                    </span>
-                    <div className="flex gap-2.5 flex-wrap justify-center">
-                      {rowSeats.map((seat) => {
-                        const isSelected = selected === seat.id
-                        const isOccupied = seat.status === "occupied"
-                        const isVip = seat.category === "VIP"
+        {/* SCREEN */}
+        <div className="text-center mb-5 sm:mb-7">
+          <div className="h-1 bg-linear-to-r from-transparent via-amber-500/60 to-transparent rounded-full mb-2" />
+          <span className="text-zinc-600 text-[10px] sm:text-[11px] tracking-[3px] uppercase">
+            Assentos
+          </span>
+        </div>
 
-                        return (
-                          <button
-                            key={seat.id}
-                            onClick={() => handleSelect(seat.id)}
-                            title={`${seat.id} — ${seat.category} — ${isOccupied ? "Ocupado" : "Disponível"}`}
-                            className={`
-                              relative w-12 h-12 rounded-xl text-sm font-bold transition-all
-                              border flex items-center justify-center
-                              hover:scale-110 active:scale-95
-                              ${isSelected
-                                ? "bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-500/40 scale-110"
-                                : isOccupied
-                                  ? "bg-red-900/30 border-red-700/50 text-red-500 cursor-pointer"
-                                  : isVip
-                                    ? "bg-amber-900/30 border-amber-600/40 text-amber-400 hover:bg-amber-800/40"
-                                    : "bg-green-900/30 border-green-700/50 text-green-400 hover:bg-green-800/40"
-                              }
-                            `}
-                          >
-                            {seat.id.slice(1)}
-                            {isVip && !isOccupied && !isSelected && (
-                              <Crown size={9} className="absolute top-1 right-1 text-amber-500" />
-                            )}
-                            {isOccupied && (
-                              <X size={12} className="absolute inset-0 m-auto text-red-500 pointer-events-none" />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+        {/* SEATS */}
+        <div className="flex flex-col gap-1.5 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto pb-2">
 
-            {/* Legend */}
-            <div className="flex flex-wrap justify-center gap-4 text-xs text-zinc-400">
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded bg-green-900/30 border border-green-700/50" />
-                Disponível
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded bg-amber-900/30 border border-amber-600/40" />
-                VIP
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded bg-red-900/30 border border-red-700/50 flex items-center justify-center">
-                  <X size={8} className="text-red-500" />
-                </div>
-                Ocupado
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded bg-amber-500 border border-amber-400" />
-                Selecionado
-              </div>
-            </div>
+          {rows.map(row => {
+            const rowChairs = chairs.filter(c => c.row === row)
+            const isVipRow = rowChairs[0]?.category === "VIP"
 
-            {/* Selected seat panel */}
-            {selectedSeat && (
-              <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`
-                      w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm
-                      ${selectedSeat.category === "VIP"
-                        ? "bg-amber-500/20 border border-amber-500/40 text-amber-400"
-                        : "bg-zinc-700 border border-zinc-600 text-white"
-                      }
-                    `}>
-                      {selectedSeat.id}
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold text-sm">Assento {selectedSeat.id}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className={`
-                          text-xs px-2 py-0.5 rounded-full font-medium
-                          ${selectedSeat.category === "VIP"
-                            ? "bg-amber-500/20 text-amber-400"
-                            : "bg-zinc-700 text-zinc-300"
-                          }
-                        `}>
-                          {selectedSeat.category === "VIP" && <Crown size={10} className="inline mr-1" />}
-                          {selectedSeat.category}
-                        </span>
-                        <span className={`
-                          text-xs px-2 py-0.5 rounded-full font-medium
-                          ${selectedSeat.status === "available"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                          }
-                        `}>
-                          {selectedSeat.status === "available" ? "Disponível" : "Ocupado"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelected(null)}
-                    className="text-zinc-500 hover:text-white transition"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
+            return (
+              <div key={row} className="flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleReserve}
-                    disabled={selectedSeat.status === "occupied"}
-                    className={`
-                      flex-1 flex items-center justify-center gap-2
-                      py-2.5 rounded-xl font-semibold text-sm
-                      transition-all
-                      ${selectedSeat.status === "available"
-                        ? "bg-linear-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-white shadow-lg hover:shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98]"
-                        : "bg-zinc-700 text-zinc-500 cursor-not-allowed"
-                      }
-                    `}
-                  >
-                    <Star size={16} />
-                    Reservar
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    disabled={selectedSeat.status === "available"}
-                    className={`
-                      flex-1 flex items-center justify-center gap-2
-                      py-2.5 rounded-xl font-semibold text-sm
-                      transition-all
-                      ${selectedSeat.status === "occupied"
-                        ? "bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30 hover:scale-[1.02] active:scale-[0.98]"
-                        : "bg-zinc-700 text-zinc-500 cursor-not-allowed"
-                      }
-                    `}
-                  >
-                    <X size={16} />
-                    Cancelar Reserva
-                  </button>
+                <span
+                  className={`w-4 sm:w-5 text-right text-[10px] sm:text-xs font-bold shrink-0 ${
+                    isVipRow ? "text-amber-500" : "text-zinc-600"
+                  }`}
+                >
+                  {row}
+                </span>
+
+                <div className="flex gap-1 sm:gap-2 justify-center flex-wrap">
+
+                  {rowChairs.map(chair => {
+                    const isSel = selected === chair.id
+                    const isOcc = chair.status === "occupied"
+                    const isVip = chair.category === "VIP"
+
+                    return (
+                      <button
+                        key={chair.id}
+                        onClick={() => handleSelect(chair.id)}
+                        className={seatClasses(chair, selected)}
+                      >
+                        {chair.number}
+
+                        {isVip && !isOcc && !isSel && (
+                          <Crown
+                            size={8}
+                            className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 text-amber-500"
+                          />
+                        )}
+
+                        {isOcc && (
+                          <X
+                            size={10}
+                            className="absolute text-red-500 pointer-events-none"
+                          />
+                        )}
+                      </button>
+                    )
+                  })}
+
                 </div>
               </div>
-            )}
+            )
+          })}
+        </div>
 
-            {/* Back */}
-            <div className="text-center pt-4 border-t border-zinc-800">
-              <button
-                className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition"
-              >
-                <ArrowLeft size={16} />
-                Voltar para home
-              </button>
+        {/* LEGEND */}
+        <div className="flex items-center justify-center gap-3 sm:gap-5 mb-5 sm:mb-6 flex-wrap">
+          {[
+            { color: "bg-emerald-500", label: "Disponível" },
+            { color: "bg-amber-700",   label: "VIP" },
+            { color: "bg-red-700",     label: "Ocupado" },
+            { color: "bg-amber-400",   label: "Selecionado" },
+          ].map(({ color, label }) => (
+            <span key={label} className="flex items-center gap-1.5 text-zinc-400 text-[10px] sm:text-xs">
+              <span className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${color} inline-block shrink-0`} />
+              {label}
+            </span>
+          ))}
+        </div>
+
+        {/* SELECTED PANEL */}
+        {selectedChair && (
+          <div className="bg-zinc-900/90 border border-zinc-700 rounded-2xl p-4 sm:p-5">
+
+            <div className="flex items-center gap-3 sm:gap-4 mb-4">
+
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0">
+                {selectedChair.row}{selectedChair.number}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-white font-bold text-xs sm:text-sm mb-1.5">
+                  Assento {selectedChair.row}{selectedChair.number}
+                </p>
+
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <span className="border border-zinc-600 text-zinc-400 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 rounded-md">
+                    {selectedChair.category}
+                  </span>
+                  <span className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md border ${
+                    selectedChair.status === "available"
+                      ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
+                      : "bg-red-500/10 border-red-500/40 text-red-400"
+                  }`}>
+                    {selectedChair.status === "available" ? "Disponível" : "Ocupado"}
+                  </span>
+                </div>
+              </div>
+
             </div>
+
+            <button
+              onClick={handleReserve}
+              disabled={selectedChair.status === "occupied"}
+              className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 rounded-xl font-bold text-sm bg-linear-to-r from-amber-500 to-amber-600 text-white hover:scale-[1.02] transition-transform disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              <Star size={15} />
+              Confirmar Reserva
+            </button>
 
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   )
