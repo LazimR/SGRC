@@ -9,8 +9,9 @@ import LoginUser from "../components/pages/auth/Login"
 import Profile from "../components/pages/user/Profile"
 import PageNotFound from "../components/pages/errors/PageNotFound"
 import ClientRoutes from "./ClientRoutes"
-import SeatManagement from "../components/pages/seat/SeatManagement"
-import Home from "../components/pages/home/Home"
+import SeatScreen from "../components/pages/seat/SeatManagement"
+import SessionsScreen from "../components/pages/session/Session"
+import ConfirmationScreen from "../components/pages/confirmation/Confirmation"
 
 export default function AppRoutes() {
   return (
@@ -18,8 +19,9 @@ export default function AppRoutes() {
 
       <Route element={<PublicRoutes />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/seats" element={<SeatManagement />} />
+          <Route path="/" element={<SessionsScreen />} />
+          <Route path="/seats" element={<SeatScreen />} />
+          <Route path="/confirmation" element={<ConfirmationScreen />} />
         </Route>
       </Route>
 
