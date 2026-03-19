@@ -1,6 +1,8 @@
 import api from "./api"
 import axios, { type AxiosRequestConfig, type Method } from "axios"
 import { type ApiResponse } from "../types/api"
+import { createClient } from "@supabase/supabase-js";
+
 
 export async function requestData<TResponse, TRequest = unknown>(
   endpoint: string,
@@ -51,3 +53,8 @@ export async function requestData<TResponse, TRequest = unknown>(
     }
   }
 }
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
