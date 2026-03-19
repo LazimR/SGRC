@@ -6,7 +6,7 @@ import {
 } from "react"
 
 import useAuth from "../hooks/userAuth"
-import { requestData } from "../services/requestApi"
+//import { requestData } from "../services/requestApi"
 
 import type { LoginData, RegisterFormData } from "../hooks/userAuth"
 import type { ApiResponse } from "../types/api"
@@ -63,7 +63,7 @@ export function UserProvider({ children }: ProviderProps) {
 
 
 
-  useEffect(() => {
+  /*useEffect(() => {
     async function checkSession() {
       const response = await requestData<Client>(
         "/user/session",
@@ -85,7 +85,7 @@ export function UserProvider({ children }: ProviderProps) {
     }
 
     checkSession()
-  }, [])
+  }, [])*/
 
  
   useEffect(() => {

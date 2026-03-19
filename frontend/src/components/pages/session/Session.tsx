@@ -104,12 +104,10 @@ export default function SessionsScreen() {
                   >
                     <div className="flex-1 min-w-0">
 
-                      {/* Title + genre badge */}
                       <div className="flex items-center gap-2.5 mb-2 flex-wrap">
                         <span className="text-white font-bold text-base">
                           {session.movie}
                         </span>
-                        {/* inline mantido só para hex dinâmico */}
                         <span
                           className="text-[11px] font-semibold px-2 py-0.5 rounded-md border"
                           style={{

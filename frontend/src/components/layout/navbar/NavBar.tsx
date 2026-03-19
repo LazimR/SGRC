@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Menu as MenuIcon, X, Film } from "lucide-react"
 import { useUser } from "../../../context/useUser"
-import { requestData } from "../../../services/requestApi"
+//import { requestData } from "../../../services/requestApi"
 import useFlashMessage from "../../../hooks/useFlashMessage"
 import type { Client } from "../../../types/client/client"
 
@@ -17,7 +17,7 @@ function NavBar() {
   const [open, setOpen] = useState(false)
   const [requestUser, setRequestUser] = useState<Client | null>(null)
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!user?.id) return
 
     async function fetchUser() {
@@ -34,7 +34,7 @@ function NavBar() {
     }
 
     fetchUser()
-  }, [user])
+  }, [user])*/
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "unset"

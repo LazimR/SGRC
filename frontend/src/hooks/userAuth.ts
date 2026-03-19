@@ -1,7 +1,7 @@
 import { useCallback } from "react"
 import { requestData } from "../services/requestApi"
 import type { ApiResponse } from "../types/api"
-import type { User } from "../types/client/user"
+import type { Client } from "../types/client/client"
 import type {
   RegisterResponse,
   LoginResponse,
@@ -10,7 +10,7 @@ import type {
  
 export interface AuthHookParams {
   setAuthenticated: (value: boolean) => void
-  setUser: (value: User | null) => void
+  setUser: (value: Client | null) => void
 }
 
 
