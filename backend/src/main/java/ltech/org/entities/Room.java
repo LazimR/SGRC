@@ -21,12 +21,9 @@ public class Room {
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
     private  List<Session> sessions;
 
-    protected Room (){
+    protected Room (){}
 
-    }
-
-    public Room(Integer id, String name) {
-        this.id = id;
+    public Room(String name) {
         this.name = name;
     }
 

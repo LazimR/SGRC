@@ -30,7 +30,6 @@ public class Reservation {
     }
 
     public Reservation(Integer id, Chair chair, User user, Session session) {
-        this.id = id;
         this.chair = chair;
         this.user = user;
         this.session = session;

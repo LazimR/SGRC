@@ -26,8 +26,7 @@ public class Session {
 
     protected Session(){}
 
-    public Session(Integer id, LocalDateTime startTime, LocalDateTime endTime, Room room, List<Reservation> reservations) {
-        this.id = id;
+    public Session(LocalDateTime startTime, LocalDateTime endTime, Room room, List<Reservation> reservations) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.room = room;
@@ -63,6 +62,10 @@ public class Session {
 
     public Room getRoom() {
         return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     public List<Reservation> getReservations() {

@@ -28,8 +28,7 @@ public class Chair {
 
     protected Chair (){}
 
-    public Chair(Integer id, Room room, char row, int number) {
-        this.id = id;
+    public Chair(Room room, char row, int number) {
         this.room = room;
         this.row = row;
         this.number = number;
