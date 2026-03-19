@@ -4,7 +4,7 @@ import { Menu as MenuIcon, X, Film } from "lucide-react"
 import { useUser } from "../../../context/useUser"
 import { requestData } from "../../../services/requestApi"
 import useFlashMessage from "../../../hooks/useFlashMessage"
-import type { User } from "../../../types/client/user"
+import type { Client } from "../../../types/client/client"
 
 import { DesktopUserMenu } from "./DesktopUserMenu"
 import { MobileDrawerMenu } from "./MobileDrawerMenu"
@@ -15,13 +15,13 @@ function NavBar() {
   const { setFlashMessage } = useFlashMessage()
 
   const [open, setOpen] = useState(false)
-  const [requestUser, setRequestUser] = useState<User | null>(null)
+  const [requestUser, setRequestUser] = useState<Client | null>(null)
 
   useEffect(() => {
     if (!user?.id) return
 
     async function fetchUser() {
-      const response = await requestData<User>(
+      const response = await requestData<Client>(
         `/user/${user?.id}`,
         "GET",
         {},

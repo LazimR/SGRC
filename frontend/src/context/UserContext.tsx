@@ -15,14 +15,14 @@ import type {
   LoginResponse,
   LogoutResponse,
 } from "../types/authResponses"
-import type { User } from "../types/client/user"
+import type { Client } from "../types/client/client"
 
 
 
 
 interface UserContextType {
   authenticated: boolean
-  user: User | null
+  user: Client | null
   loading: boolean
   sessionExpired: boolean
   setSessionExpired: (value: boolean) => void
@@ -48,7 +48,7 @@ interface ProviderProps {
 
 export function UserProvider({ children }: ProviderProps) {
   const [authenticated, setAuthenticated] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessionExpired, setSessionExpired] = useState(false)
 
@@ -65,7 +65,7 @@ export function UserProvider({ children }: ProviderProps) {
 
   useEffect(() => {
     async function checkSession() {
-      const response = await requestData<User>(
+      const response = await requestData<Client>(
         "/user/session",
         "GET",
         {},
