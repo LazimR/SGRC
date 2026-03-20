@@ -1,9 +1,6 @@
 import {
   User,
-  Users,
-  Car,
-  ParkingSquare,
-  ListChecks
+  CalendarCheck,
 } from "lucide-react"
 
 export const MENU_ITEMS = [
@@ -13,23 +10,8 @@ export const MENU_ITEMS = [
     icon: User,
   },
   {
-    label: "Estacionamentos",
-    to: "/parking/list",
-    icon: ParkingSquare,
-  },
-  {
-    label: "Clientes",
-    to: "/client/list/clients",
-    icon: Users,
-  },
-  {
-    label: "Veículos",
-    to: "/vehicle/list/vehicles",
-    icon: Car,
-  },
-  {
-    label: "Alocações",
-    to: "/parking/management",
-    icon: ListChecks,
+    label: "Minhas Reservas",
+    to: "/reservations",
+    icon: CalendarCheck,
   },
 ]
