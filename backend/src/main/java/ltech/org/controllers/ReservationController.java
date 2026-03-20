@@ -7,6 +7,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/reservations")
@@ -31,6 +32,11 @@ public class ReservationController {
     @GetMapping("/{id}")
     public ReservationDTO findById(@PathVariable Integer id) {
         return service.findById(id);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<ReservationDTO> findByUserId(@PathVariable UUID userId) {
+        return service.findByUserId(userId);
     }
 
     @DeleteMapping("/{id}")

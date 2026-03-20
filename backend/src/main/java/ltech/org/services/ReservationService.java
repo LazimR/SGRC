@@ -78,6 +78,13 @@ public class ReservationService {
         return new ReservationDTO(reservation);
     }
 
+    public List<ReservationDTO> findByUserId(UUID userId) {
+        return reservationRepository.findAllByUserId(userId)
+                .stream()
+                .map(ReservationDTO::new)
+                .toList();
+    }
+
     public void delete(Integer id) {
         if (!reservationRepository.existsById(id)) {
             throw new RuntimeException("Reserva nao encontrada");
