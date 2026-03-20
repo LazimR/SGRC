@@ -14,6 +14,8 @@ public class ChairDTO implements Serializable {
     private int number;
     private char row;
     private ChairType category;
+    private boolean ocupped = false;
+
     public ChairDTO() {
     }
 
@@ -82,6 +84,14 @@ public class ChairDTO implements Serializable {
 
     public void setCategory(ChairType category) {
         this.category = category;
+    }
+
+    public boolean isOcupped() {
+        return ocupped;
+    }
+
+    public void setOcupped(boolean ocupped) {
+        this.ocupped = ocupped;
     }
 
     @Override

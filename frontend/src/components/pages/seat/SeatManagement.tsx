@@ -2,84 +2,128 @@ import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { Star, Crown, X, ArrowLeft } from "lucide-react"
 
+import { useUser } from "../../../context/useUser"
+import useFlashMessage from "../../../hooks/useFlashMessage"
 import { type Session } from "../../../types/session/session"
-import { type Chair, type SeatCategory, type SeatStatus } from "../../../types/chair/chair"
+import { type Chair } from "../../../types/chair/chair"
+import { type Client } from "../../../types/client/client"
 import { formatTime } from "../../../utils/formations"
 import { requestData } from "../../../services/requestApi"
 
-function generateChairs(roomId: number): Chair[] {
-  const rows = ["A", "B", "C", "D", "E", "F"]
-  const cols = [1, 2, 3, 4, 5, 6, 7, 8]
-  const vipRows = ["A", "B"]
-
-  return rows.flatMap(row =>
-    cols.map(col => ({
-      id: `${roomId}-${row}${col}`,
-      room_id: roomId,
-      row,
-      number: col,
-      category: (vipRows.includes(row) ? "VIP" : "Normal") as SeatCategory,
-      status: (Math.random() < 0.3 ? "occupied" : "available") as SeatStatus,
-    }))
-  )
+interface ChairApiResponse {
+  id: number
+  roomId: number
+  roomName: string
+  number: number
+  row: string
+  category: "VIP" | "NORMAL"
+  ocupped: boolean
 }
 
-const MOCK_CHAIRS: Record<number, Chair[]> = {
-  1: generateChairs(1),
-  2: generateChairs(2),
-  3: generateChairs(3),
+interface ReservationRequest {
+  chairId: number
+  sessionId: number
 }
 
-function seatClasses(chair: Chair, selected: string | null): string {
+interface ReservationResponse {
+  id: number
+  chairId: number
+  chairLabel: string
+  roomName: string
+  sessionId: number
+  sessionTime: string
+  userId: string
+  userName: string
+}
+
+function mapChair(apiChair: ChairApiResponse): Chair {
+  return {
+    id: apiChair.id,
+    roomId: apiChair.roomId,
+    roomName: apiChair.roomName,
+    row: apiChair.row,
+    number: apiChair.number,
+    category: apiChair.category === "VIP" ? "VIP" : "Normal",
+    status: apiChair.ocupped ? "occupied" : "available",
+  }
+}
+
+function seatClasses(chair: Chair, selected: number | null): string {
   const isSel = selected === chair.id
   const isOcc = chair.status === "occupied"
   const isVip = chair.category === "VIP"
 
   const base =
-    "relative w-11 h-11 sm:w-13 sm:h-13 md:w-16 md:h-16 rounded-xl font-bold text-sm flex items-center justify-center border-[1.5px] cursor-pointer transition-transform"
+    "relative w-11 h-11 sm:w-13 sm:h-13 md:w-16 md:h-16 rounded-xl font-bold text-sm flex items-center justify-center border-[1.5px] transition-transform"
 
   if (isSel)
     return `${base} bg-amber-500 border-amber-400 text-white scale-110 shadow-lg shadow-amber-500/30`
   if (isOcc)
-    return `${base} bg-red-950/60 border-red-700/50 text-red-500`
+    return `${base} bg-red-950/60 border-red-700/50 text-red-500 cursor-not-allowed opacity-70`
   if (isVip)
-    return `${base} bg-amber-950/60 border-amber-600/40 text-amber-400 hover:bg-amber-900/50`
+    return `${base} bg-amber-950/60 border-amber-600/40 text-amber-400 cursor-pointer hover:bg-amber-900/50`
 
-  return `${base} bg-emerald-950/60 border-emerald-700/40 text-emerald-400 hover:bg-emerald-900/40`
+  return `${base} bg-emerald-950/60 border-emerald-700/40 text-emerald-400 cursor-pointer hover:bg-emerald-900/40`
 }
 
 export default function SeatScreen() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { authenticated, user } = useUser()
+  const { setFlashMessage } = useFlashMessage()
+  const session = location.state?.session as Session | undefined
+  const selectedChairId = location.state?.selectedChairId as number | undefined
 
-  const [chair, setChair] = useState<Chair[]>([])
+  const [chairs, setChairs] = useState<Chair[]>([])
+  const [selected, setSelected] = useState<number | null>(selectedChairId ?? null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isReserving, setIsReserving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchSessions() {
-      const token = localStorage.getItem("jwt_token")
-      const response = await requestData<Chair[]>(
-        "/chairs", "GET", {}, true,
-        token ? { Authorization: `Bearer ${token}` } : undefined
-      )
-      if (response.success && response.data) setChair(response.data)
+    if (!session) {
+      navigate("/")
+      return
     }
-    fetchSessions()
-  }, [])
 
-  const session = location.state?.session as Session | undefined
-  console.log("chair: ", chair)
+    const currentSession = session
 
+    async function fetchChairs() {
+      setIsLoading(true)
+      setError(null)
+
+      const response = await requestData<ChairApiResponse[]>(
+        `/chairs/findAll/${currentSession.roomId}/${currentSession.id}`,
+        "GET"
+      )
+
+      if (response.success && response.data) {
+        setChairs(
+          response.data
+            .map(mapChair)
+            .sort((chairA, chairB) =>
+              chairA.row.localeCompare(chairB.row) || chairA.number - chairB.number
+            )
+        )
+        return
+      }
+
+      setError(response.message ?? "Nao foi possivel carregar os assentos.")
+      setChairs([])
+    }
+
+    fetchChairs().finally(() => setIsLoading(false))
+  }, [navigate, session])
+
+  useEffect(() => {
+    if (selectedChairId) {
+      setSelected(selectedChairId)
+    }
+  }, [selectedChairId])
 
   if (!session) {
-    navigate("/")
     return null
   }
-
-  const [chairs, setChairs] = useState<Chair[]>(
-    () => [...(MOCK_CHAIRS[session.roomId] ?? [])]
-  )
-
-  const [selected, setSelected] = useState<string | null>(null)
 
   const selectedChair = chairs.find(c => c.id === selected)
   const rows: string[] = [...new Set(chairs.map(c => c.row))].sort()
@@ -88,12 +132,68 @@ export default function SeatScreen() {
   const occupied  = chairs.filter(c => c.status === "occupied").length
   const vip       = chairs.filter(c => c.category === "VIP" && c.status === "available").length
 
-  function handleSelect(id: string): void {
+  function handleSelect(id: number): void {
     setSelected(prev => (prev === id ? null : id))
   }
 
-  function handleReserve(): void {
+  async function handleReserve(): Promise<void> {
     if (!selectedChair || selectedChair.status === "occupied") return
+    const currentSession = session
+    if (!currentSession) return
+
+    if (!authenticated) {
+      navigate("/login", {
+        state: {
+          redirectTo: "/seats",
+          redirectState: {
+            session: currentSession,
+            selectedChairId: selectedChair.id,
+          },
+        }
+      })
+      return
+    }
+
+    const token = localStorage.getItem("jwt_token")
+    if (!token || !user?.id) {
+      navigate("/login", {
+        state: {
+          redirectTo: "/seats",
+          redirectState: {
+            session: currentSession,
+            selectedChairId: selectedChair.id,
+          },
+        }
+      })
+      return
+    }
+
+    setIsReserving(true)
+
+    const reservationPayload: ReservationRequest = {
+      chairId: selectedChair.id,
+      sessionId: currentSession.id,
+    }
+
+    const response = await requestData<ReservationResponse, ReservationRequest>(
+      "/reservations",
+      "POST",
+      reservationPayload,
+      true,
+      { Authorization: `Bearer ${token}` }
+    )
+
+    if (!response.success) {
+      setFlashMessage("error", response.message || "Nao foi possivel realizar a reserva.")
+      setChairs(prev =>
+        prev.map(c =>
+          c.id === selectedChair.id ? { ...c, status: "occupied" } : c
+        )
+      )
+      setSelected(null)
+      setIsReserving(false)
+      return
+    }
 
     setChairs(prev =>
       prev.map(c =>
@@ -104,12 +204,17 @@ export default function SeatScreen() {
     navigate("/confirmation", {
       state: {
         reservation: {
-          session,
+          session: currentSession,
           chair: selectedChair,
-          user: { id: 1, name: "Cliente" }
+          user: {
+            ...(user ?? ({ id: "", name: "Cliente" } as Client)),
+            name: response.data?.userName ?? user?.name ?? user?.username ?? "Cliente",
+          }
         }
       }
     })
+    setFlashMessage("success", "Reserva realizada com sucesso.")
+    setIsReserving(false)
   }
 
   return (
@@ -134,7 +239,7 @@ export default function SeatScreen() {
         </div>
       </nav>
 
-      <div className="max-w-2xl mx-auto px-3 sm:px-5 py-5 sm:py-8">
+      <div className={`max-w-2xl mx-auto px-3 sm:px-5 py-5 sm:py-8 ${selectedChair ? "pb-44 sm:pb-48" : ""}`}>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
           <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2.5 sm:py-3.5 text-center">
@@ -156,7 +261,20 @@ export default function SeatScreen() {
           <span className="text-zinc-600 text-[10px] sm:text-[11px] tracking-[3px] uppercase">Assentos</span>
         </div>
 
-        <div className="flex flex-col gap-1.5 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto pb-2">
+        {isLoading && (
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl px-4 py-6 text-center text-sm text-zinc-400 mb-6 sm:mb-8">
+            Carregando assentos...
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="bg-red-950/40 border border-red-900/60 rounded-2xl px-4 py-6 text-center text-sm text-red-300 mb-6 sm:mb-8">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <div className="flex flex-col gap-1.5 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto pb-2">
           {rows.map(row => {
             const rowChairs = chairs.filter(c => c.row === row)
             const isVipRow  = rowChairs[0]?.category === "VIP"
@@ -175,7 +293,10 @@ export default function SeatScreen() {
                     return (
                       <button
                         key={chair.id}
+                        type="button"
                         onClick={() => handleSelect(chair.id)}
+                        disabled={isOcc}
+                        aria-disabled={isOcc}
                         className={seatClasses(chair, selected)}
                       >
                         {chair.number}
@@ -192,7 +313,8 @@ export default function SeatScreen() {
               </div>
             )
           })}
-        </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-center gap-3 sm:gap-5 mb-5 sm:mb-6 flex-wrap">
           {[
@@ -209,7 +331,8 @@ export default function SeatScreen() {
         </div>
 
         {selectedChair && (
-          <div className="bg-zinc-900/90 border border-zinc-700 rounded-2xl p-4 sm:p-5">
+          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-sm px-3 pb-3 pt-3 sm:px-5 sm:pb-5">
+            <div className="max-w-2xl mx-auto bg-zinc-900/90 border border-zinc-700 rounded-2xl p-4 sm:p-5 shadow-2xl">
             <div className="flex items-center gap-3 sm:gap-4 mb-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0">
                 {selectedChair.row}{selectedChair.number}
@@ -235,12 +358,13 @@ export default function SeatScreen() {
 
             <button
               onClick={handleReserve}
-              disabled={selectedChair.status === "occupied"}
+              disabled={selectedChair.status === "occupied" || isReserving}
               className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 rounded-xl font-bold text-sm bg-linear-to-r from-amber-500 to-amber-600 text-white hover:scale-[1.02] transition-transform disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               <Star size={15} />
-              Confirmar Reserva
+              {isReserving ? "Reservando..." : "Confirmar Reserva"}
             </button>
+          </div>
           </div>
         )}
 

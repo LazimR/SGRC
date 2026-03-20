@@ -42,11 +42,11 @@ export default function ConfirmationScreen() {
   }
 
   const { session, chair, user } = reservation
-  const room = MOCK_ROOMS.find(r => r.id === session.room_id)
+  const room = MOCK_ROOMS.find(r => r.id === session.roomId)
 
   const ticketFields = [
-    { label: "Data",       val: formatDate(session.start_time) },
-    { label: "Horário",    val: `${formatTime(session.start_time)} – ${formatTime(session.end_time)}` },
+    { label: "Data",       val: formatDate(session.startTime) },
+    { label: "Horário",    val: `${formatTime(session.startTime)} – ${formatTime(session.endTime)}` },
     { label: "Sala",       val: room?.name ?? "—" },
     { label: "Assento",    val: `${chair.row}${chair.number} (${chair.category})` },
     { label: "Cliente",    val: user.name },

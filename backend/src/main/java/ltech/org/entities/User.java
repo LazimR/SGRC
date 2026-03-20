@@ -1,7 +1,6 @@
 package ltech.org.entities;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,8 +11,6 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue
-    @UuidGenerator
     private UUID id;
 
     @Column(nullable = false)

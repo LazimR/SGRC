@@ -1,5 +1,5 @@
-import type { User } from "./client/user"
+import type { Client } from "./client/client"
 
-export type RegisterResponse = User
-export type LoginResponse = User
+export type RegisterResponse = Client
+export type LoginResponse = Client
 export type LogoutResponse = null

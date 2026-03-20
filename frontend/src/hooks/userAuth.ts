@@ -1,5 +1,4 @@
 import { useCallback } from "react"
-import { requestData } from "../services/requestApi"
 import { supabase } from "../services/requestApi"
 import type { ApiResponse } from "../types/api"
 import type { Client } from "../types/client/client"
@@ -33,6 +32,23 @@ export interface UseAuthReturn {
   logout: () => Promise<ApiResponse<LogoutResponse>>
 }
 
+const AUTH_USER_STORAGE_KEY = "auth_user"
+const JWT_STORAGE_KEY = "jwt_token"
+
+function persistAuth(user: Client | null, token?: string | null) {
+  if (user) {
+    localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user))
+  } else {
+    localStorage.removeItem(AUTH_USER_STORAGE_KEY)
+  }
+
+  if (token) {
+    localStorage.setItem(JWT_STORAGE_KEY, token)
+  } else {
+    localStorage.removeItem(JWT_STORAGE_KEY)
+  }
+}
+
 
 export default function useAuth({
   setAuthenticated,
@@ -60,7 +76,11 @@ export default function useAuth({
 
     return {
       success: true,
-      data: authData.user,
+      data: {
+        id: authData.user!.id,
+        email: authData.user!.email,
+        username: authData.user!.user_metadata?.username ?? "",
+      } as Client,
       message: "Usuário criado com sucesso",
     }
   }, [])
@@ -81,18 +101,26 @@ export default function useAuth({
     }
 
     if (authData.user) {
-      setAuthenticated(true)
-
-      setUser({
+      const authUser = {
         id: authData.user.id,
         email: authData.user.email,
         username: authData.user.user_metadata?.username ?? "",
-      } as Client)
+        name: authData.user.user_metadata?.name ?? authData.user.user_metadata?.username ?? "",
+      } as Client
+
+      setAuthenticated(true)
+      setUser(authUser)
+      persistAuth(authUser, authData.session?.access_token)
     }
 
     return {
       success: true,
-      data: authData.user,
+      data: {
+        id: authData.user.id,
+        email: authData.user.email,
+        username: authData.user.user_metadata?.username ?? "",
+        name: authData.user.user_metadata?.name ?? authData.user.user_metadata?.username ?? "",
+      } as Client,
       message: "Login realizado com sucesso",
     }
   }, [setAuthenticated, setUser])
@@ -100,19 +128,24 @@ export default function useAuth({
 
 
   const logout = useCallback(async () => {
-    const response = await requestData<LogoutResponse>(
-      "/user/logout",
-      "POST",
-      {},
-      true
-    )
+    const { error } = await supabase.auth.signOut()
 
-    if (response.success) {
-      setAuthenticated(false)
-      setUser(null)
+    if (error) {
+      return {
+        success: false,
+        message: error.message,
+      }
     }
 
-    return response
+    setAuthenticated(false)
+    setUser(null)
+    persistAuth(null)
+
+    return {
+      success: true,
+      data: null,
+      message: "Logout realizado com sucesso",
+    }
   }, [setAuthenticated, setUser])
 
 

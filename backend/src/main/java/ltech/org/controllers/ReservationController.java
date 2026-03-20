@@ -2,6 +2,8 @@ package ltech.org.controllers;
 
 import ltech.org.dto.ReservationDTO;
 import ltech.org.services.ReservationService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,8 +19,8 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ReservationDTO create(@RequestBody ReservationDTO dto) {
-        return service.create(dto);
+    public ReservationDTO create(@RequestBody ReservationDTO dto, @AuthenticationPrincipal Jwt jwt) {
+        return service.create(dto, jwt);
     }
 
     @GetMapping

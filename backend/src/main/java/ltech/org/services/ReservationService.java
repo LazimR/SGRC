@@ -1,11 +1,20 @@
 package ltech.org.services;
 
 import ltech.org.dto.ReservationDTO;
-import ltech.org.entities.*;
-import ltech.org.repositories.*;
+import ltech.org.dto.UserDTO;
+import ltech.org.entities.Chair;
+import ltech.org.entities.Reservation;
+import ltech.org.entities.Session;
+import ltech.org.entities.User;
+import ltech.org.repositories.ChairRepository;
+import ltech.org.repositories.ReservationRepository;
+import ltech.org.repositories.SessionRepository;
+import ltech.org.repositories.UserRepository;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ReservationService {
@@ -14,52 +23,47 @@ public class ReservationService {
     private final ChairRepository chairRepository;
     private final SessionRepository sessionRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     public ReservationService(
             ReservationRepository reservationRepository,
             ChairRepository chairRepository,
             SessionRepository sessionRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            UserService userService
     ) {
         this.reservationRepository = reservationRepository;
         this.chairRepository = chairRepository;
         this.sessionRepository = sessionRepository;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
-    // CREATE
-    public ReservationDTO create(ReservationDTO dto) {
-
+    public ReservationDTO create(ReservationDTO dto, Jwt jwt) {
         Chair chair = chairRepository.findById(dto.getChairId())
-                .orElseThrow(() -> new RuntimeException("Cadeira não encontrada"));
+                .orElseThrow(() -> new RuntimeException("Cadeira nao encontrada"));
 
         Session session = sessionRepository.findById(dto.getSessionId())
-                .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+                .orElseThrow(() -> new RuntimeException("Sessao nao encontrada"));
 
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        UUID userId = UUID.fromString(jwt.getSubject());
+        String email = jwt.getClaim("email");
+        String name = jwt.getClaim("name");
+        UserDTO authenticatedUser = userService.getOrCreateUser(userId, email, name);
+        User user = userRepository.findById(authenticatedUser.getId())
+                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
 
-        // 🚨 REGRA IMPORTANTE: evitar dupla reserva
-        boolean alreadyReserved = reservationRepository
-                .existsByChairAndSession(chair, session);
-
+        boolean alreadyReserved = reservationRepository.existsByChairAndSession(chair, session);
         if (alreadyReserved) {
-            throw new RuntimeException("Cadeira já reservada para essa sessão");
+            throw new RuntimeException("Cadeira ja reservada para essa sessao");
         }
 
-        Reservation reservation = new Reservation(
-                null, // id gerado pelo banco
-                chair,
-                user,
-                session
-        );
-
+        Reservation reservation = new Reservation(null, chair, user, session);
         Reservation saved = reservationRepository.save(reservation);
 
         return new ReservationDTO(saved);
     }
 
-    // READ ALL
     public List<ReservationDTO> findAll() {
         return reservationRepository.findAll()
                 .stream()
@@ -67,18 +71,16 @@ public class ReservationService {
                 .toList();
     }
 
-    // READ BY ID
     public ReservationDTO findById(Integer id) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reserva não encontrada"));
+                .orElseThrow(() -> new RuntimeException("Reserva nao encontrada"));
 
         return new ReservationDTO(reservation);
     }
 
-    // DELETE
     public void delete(Integer id) {
         if (!reservationRepository.existsById(id)) {
-            throw new RuntimeException("Reserva não encontrada");
+            throw new RuntimeException("Reserva nao encontrada");
         }
 
         reservationRepository.deleteById(id);

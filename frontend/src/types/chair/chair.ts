@@ -2,8 +2,9 @@ export type SeatStatus = "available" | "occupied"
 export type SeatCategory = "VIP" | "Normal"
 
 export interface Chair {
-  id: string
-  room_id: number
+  id: number
+  roomId: number
+  roomName?: string
   row: string
   number: number
   category: SeatCategory

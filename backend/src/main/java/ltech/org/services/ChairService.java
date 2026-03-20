@@ -2,10 +2,12 @@ package ltech.org.services;
 
 import ltech.org.dto.ChairDTO;
 import ltech.org.entities.Chair;
+import ltech.org.entities.Reservation;
 import ltech.org.entities.Room;
 import ltech.org.repositories.ChairRepository;
 import ltech.org.repositories.RoomRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +23,6 @@ public class ChairService {
         this.roomRepository = roomRepository;
     }
 
-    // CREATE
     public ChairDTO create(ChairDTO dto) {
 
         Room room = roomRepository.findById(dto.getRoomId())
@@ -34,9 +35,10 @@ public class ChairService {
         return new ChairDTO(saved);
     }
 
-    // READ ALL
+
+    @Transactional(readOnly = true)
     public List<ChairDTO> findAll() {
-        List<Chair> chairs = chairRepository.findAll();
+        List<Chair> chairs = chairRepository.findAllWithRoom();
         List<ChairDTO> list = new ArrayList<>();
 
         for (Chair chair : chairs) {
@@ -46,7 +48,6 @@ public class ChairService {
         return list;
     }
 
-    // READ BY ID
     public ChairDTO findById(Integer id) {
         Chair chair = chairRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cadeira não encontrada"));
@@ -54,7 +55,29 @@ public class ChairService {
         return new ChairDTO(chair);
     }
 
-    // UPDATE
+    @Transactional(readOnly = true)
+    public List<ChairDTO> findByRoomAndSession(Integer roomId, Integer sessionId) {
+        List<Chair> chairs = chairRepository.findAllByRoomIdWithReservations(roomId);
+        List<ChairDTO> list = new ArrayList<>();
+
+        for (Chair chair : chairs) {
+            ChairDTO newChair = new ChairDTO(chair);
+
+            List<Reservation> reservations = chair.getReservations();
+
+            if (reservations != null) {
+                boolean occupied = reservations.stream()
+                        .anyMatch(reservation -> reservation.getSession().getId().equals(sessionId));
+
+                newChair.setOcupped(occupied);
+            }
+
+            list.add(newChair);
+        }
+
+        return list;
+    }
+
     public ChairDTO update(Integer id, ChairDTO dto) {
 
         Chair chair = chairRepository.findById(id)
@@ -72,7 +95,6 @@ public class ChairService {
         return new ChairDTO(updated);
     }
 
-    // DELETE
     public void delete(Integer id) {
         if (!chairRepository.existsById(id)) {
             throw new RuntimeException("Cadeira não encontrada");

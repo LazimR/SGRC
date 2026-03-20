@@ -4,12 +4,12 @@ import { Link } from "react-router-dom"
 import { LogOut, X, ChevronRight } from "lucide-react"
 import { MENU_ITEMS } from "./menuItems"
 import { UserAvatar } from "./UserAvatar"
-import type { User } from "../../../types/client/user"
+import type { Client } from "../../../types/client/client"
 
 interface Props {
   open: boolean
   onClose: () => void
-  user: User | null
+  user: Client | null
   onLogout: () => void
 }
 

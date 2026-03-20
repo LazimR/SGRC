@@ -6,7 +6,7 @@ import {
 } from "react"
 
 import useAuth from "../hooks/userAuth"
-//import { requestData } from "../services/requestApi"
+import { requestData, supabase } from "../services/requestApi"
 
 import type { LoginData, RegisterFormData } from "../hooks/userAuth"
 import type { ApiResponse } from "../types/api"
@@ -17,8 +17,8 @@ import type {
 } from "../types/authResponses"
 import type { Client } from "../types/client/client"
 
-
-
+const AUTH_USER_STORAGE_KEY = "auth_user"
+const JWT_STORAGE_KEY = "jwt_token"
 
 interface UserContextType {
   authenticated: boolean
@@ -61,35 +61,77 @@ export function UserProvider({ children }: ProviderProps) {
     setUser,
   })
 
+  useEffect(() => {
+    async function restoreSession() {
+      const { data } = await supabase.auth.getSession()
+      const session = data.session
+      const storedUser = localStorage.getItem(AUTH_USER_STORAGE_KEY)
 
+      if (!session?.access_token) {
+        localStorage.removeItem(JWT_STORAGE_KEY)
+        localStorage.removeItem(AUTH_USER_STORAGE_KEY)
+        setAuthenticated(false)
+        setUser(null)
+        setLoading(false)
+        return
+      }
 
-  /*useEffect(() => {
-    async function checkSession() {
-      const response = await requestData<Client>(
-        "/user/session",
+      localStorage.setItem(JWT_STORAGE_KEY, session.access_token)
+
+      const meResponse = await requestData<Client>(
+        "/users/me",
         "GET",
         {},
-        true
+        true,
+        { Authorization: `Bearer ${session.access_token}` }
       )
 
-      if (response.success) {
+      if (meResponse.success && meResponse.data) {
         setAuthenticated(true)
-        setUser(response.data ?? null)
+        setUser(meResponse.data)
+        localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(meResponse.data))
+        setLoading(false)
+        return
+      }
+
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser) as Client
+        setAuthenticated(true)
+        setUser(parsedUser)
       } else {
         setAuthenticated(false)
         setUser(null)
-        setSessionExpired(true)
       }
 
       setLoading(false)
     }
 
-    checkSession()
-  }, [])*/
+    restoreSession()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.access_token) {
+        localStorage.removeItem(JWT_STORAGE_KEY)
+        localStorage.removeItem(AUTH_USER_STORAGE_KEY)
+        setAuthenticated(false)
+        setUser(null)
+        return
+      }
+
+      localStorage.setItem(JWT_STORAGE_KEY, session.access_token)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
  
   useEffect(() => {
     function handleExpired() {
+      localStorage.removeItem(JWT_STORAGE_KEY)
+      localStorage.removeItem(AUTH_USER_STORAGE_KEY)
       setSessionExpired(true)
       setAuthenticated(false)
       setUser(null)

@@ -1,7 +1,7 @@
-import type { User } from "../../../types/client/user"
+import type { Client } from "../../../types/client/client"
 
 interface Props {
-  user: User | null
+  user: Client | null
   size?: "sm" | "md"
 }
 

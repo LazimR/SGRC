@@ -4,7 +4,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Input from "../../ui/Input"
 import { useUser } from "../../../context/useUser"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import useFlashMessage from "../../../hooks/useFlashMessage"
 
 const LoginSchema = z.object({
@@ -15,6 +15,7 @@ const LoginSchema = z.object({
 type LoginFormData = z.infer<typeof LoginSchema>
 
 function LoginUser() {
+  const location = useLocation()
 
   const {
     register,
@@ -27,6 +28,8 @@ function LoginUser() {
   const { login: loginUser } = useUser()
   const navigate = useNavigate()
   const { setFlashMessage } = useFlashMessage()
+  const redirectTo = location.state?.redirectTo as string | undefined
+  const redirectState = location.state?.redirectState
 
   async function onSubmit(form: LoginFormData) {
     const response = await loginUser(form)
@@ -34,7 +37,10 @@ function LoginUser() {
 
     if (response.success) {
       setFlashMessage("success", response.message)
-      navigate("/")
+      navigate(redirectTo ?? "/", {
+        state: redirectState,
+        replace: true,
+      })
     } else {
       setFlashMessage("error", response.message || "Erro ao fazer login")
     }

@@ -96,7 +96,7 @@ function RegisterClient({ mode }: RegisterClientProps) {
 
     const payload: RegisterClientFormOutput = {
       ...form,
-      user_id: user.id,
+      user_id: Number(user.id),
     }
 
     const endpoint = isEditMode ? `/client/${id}` : "/client/register"

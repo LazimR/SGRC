@@ -26,6 +26,11 @@ public class ChairController {
         return service.findAll();
     }
 
+    @GetMapping("/findAll/{room_id}/{session_id}")
+    public List<ChairDTO> findAllByRoomIdAndSessionId(@PathVariable Integer room_id, @PathVariable Integer session_id){
+        return service.findByRoomAndSession(room_id,session_id);
+    }
+
     @GetMapping("/{id}")
     public ChairDTO findById(@PathVariable Integer id) {
         return service.findById(id);

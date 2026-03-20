@@ -17,43 +17,43 @@ public class UserService {
     private final UserRepository repository;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public UserService(UserRepository repository){
+    public UserService(UserRepository repository) {
         this.repository = repository;
     }
 
     public UserDTO getOrCreateUser(UUID id, String email, String fullName) {
+        String safeName = (fullName != null && !fullName.isBlank()) ? fullName : email;
 
         return repository.findById(id)
                 .map(UserDTO::new)
                 .orElseGet(() -> {
-                    // cria com dados obrigatórios
-                    User user = new User(id, fullName, email);
+                    User user = new User(id, safeName, email);
                     User saved = repository.save(user);
                     return new UserDTO(saved);
                 });
     }
-    
-    public List<UserDTO> findAll(){
+
+    public List<UserDTO> findAll() {
         List<User> users = repository.findAll();
         List<UserDTO> list = new ArrayList<>();
 
-        for(User user : users){
+        for (User user : users) {
             list.add(new UserDTO(user));
         }
 
         return list;
     }
-    
-    public UserDTO findById(UUID id){
+
+    public UserDTO findById(UUID id) {
         User user = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
 
         return new UserDTO(user);
     }
 
-    public UserDTO update(UUID id, CreateUserDTO updatedUser){
+    public UserDTO update(UUID id, CreateUserDTO updatedUser) {
         User user = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
 
         user.setName(updatedUser.getName());
         user.setEmail(updatedUser.getEmail());
@@ -63,9 +63,9 @@ public class UserService {
         return new UserDTO(savedUser);
     }
 
-    public void delete(UUID id){
-        if(!repository.existsById(id)){
-            throw new RuntimeException("Usuário não encontrado");
+    public void delete(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Usuario nao encontrado");
         }
 
         repository.deleteById(id);
