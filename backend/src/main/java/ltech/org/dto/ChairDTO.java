@@ -2,6 +2,7 @@ package ltech.org.dto;
 
 import ltech.org.entities.Chair;
 import ltech.org.entities.Room;
+import ltech.org.entities.enums.ChairType;
 
 import java.io.Serializable;
 
@@ -12,16 +13,17 @@ public class ChairDTO implements Serializable {
     private String roomName;
     private int number;
     private char row;
-
+    private ChairType category;
     public ChairDTO() {
     }
 
-    public ChairDTO(Integer id, Integer roomId, String roomName, int number, char row) {
+    public ChairDTO(Integer id, Integer roomId, String roomName, int number, char row, ChairType category) {
         this.id = id;
         this.roomId = roomId;
         this.roomName = roomName;
         this.number = number;
         this.row = row;
+        this.category = category;
     }
 
     public ChairDTO(Chair chair) {
@@ -31,6 +33,7 @@ public class ChairDTO implements Serializable {
         this.roomName = room.getName();
         this.number = chair.getNumber();
         this.row = chair.getRow();
+        this.category = chair.getCategory();
     }
 
     public Integer getId() {
@@ -73,6 +76,14 @@ public class ChairDTO implements Serializable {
         this.row = row;
     }
 
+    public ChairType getCategory() {
+        return category;
+    }
+
+    public void setCategory(ChairType category) {
+        this.category = category;
+    }
+
     @Override
     public String toString() {
         return "ChairDTO{" +
@@ -81,6 +92,7 @@ public class ChairDTO implements Serializable {
                 ", roomName='" + roomName + '\'' +
                 ", number=" + number +
                 ", row=" + row +
+                ", category=" + category +
                 '}';
     }
 }

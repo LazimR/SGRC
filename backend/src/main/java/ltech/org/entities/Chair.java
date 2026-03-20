@@ -1,9 +1,13 @@
 package ltech.org.entities;
 
 import jakarta.persistence.*;
+import ltech.org.entities.enums.ChairType;
 
 import java.util.List;
 import java.util.Objects;
+
+;
+
 
 @Entity
 @Table(name = "tb_chair", uniqueConstraints = @UniqueConstraint(columnNames = {"room_id","row","number"}))
@@ -13,6 +17,8 @@ public class Chair {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
+    private ChairType category;
     @ManyToOne
             @JoinColumn(name = "room_id")
     private Room room;
@@ -28,10 +34,11 @@ public class Chair {
 
     protected Chair (){}
 
-    public Chair(Room room, char row, int number) {
+    public Chair(Room room, char row, int number, ChairType category) {
         this.room = room;
         this.row = row;
         this.number = number;
+        this.category = category;
     }
 
     public Integer getId() {
@@ -64,6 +71,22 @@ public class Chair {
 
     public void setNumber(int number) {
         this.number = number;
+    }
+
+    public ChairType getCategory() {
+        return category;
+    }
+
+    public void setCategory(ChairType category) {
+        this.category = category;
+    }
+
+    public List<Reservation> getReservations() {
+        return reservations;
+    }
+
+    public void setReservations(List<Reservation> reservations) {
+        this.reservations = reservations;
     }
 
     @Override

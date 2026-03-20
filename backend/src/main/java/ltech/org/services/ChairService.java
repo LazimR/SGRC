@@ -27,7 +27,7 @@ public class ChairService {
         Room room = roomRepository.findById(dto.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Sala não encontrada"));
 
-        Chair chair = new Chair(room, dto.getRow(), dto.getNumber());
+        Chair chair = new Chair(room, dto.getRow(), dto.getNumber(), dto.getCategory());
 
         Chair saved = chairRepository.save(chair);
 

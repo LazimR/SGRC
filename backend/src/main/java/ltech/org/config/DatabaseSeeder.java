@@ -3,6 +3,7 @@ package ltech.org.config;
 import ltech.org.entities.Chair;
 import ltech.org.entities.Room;
 import ltech.org.entities.Session;
+import ltech.org.entities.enums.ChairType;
 import ltech.org.repositories.ChairRepository;
 import ltech.org.repositories.RoomRepository;
 import ltech.org.repositories.SessionRepository;
@@ -13,6 +14,9 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static ltech.org.entities.enums.ChairType.NORMAL;
+import static ltech.org.entities.enums.ChairType.VIP;
 
 @Configuration
 public class DatabaseSeeder {
@@ -37,12 +41,16 @@ public class DatabaseSeeder {
             roomRepository.saveAll(rooms);
 
             List<Chair> chairs = new ArrayList<>();
-
+            ChairType category = NORMAL;
             for (Room room : rooms) {
                 for (char row = 'A'; row <= 'J'; row++) {
-                    for (int number = 1; number <= 20; number++) {
-                        chairs.add(new Chair(room, row, number));
+                    if(row == 'A' || row == 'B'){
+                        category = VIP;
                     }
+                    for (int number = 1; number <= 20; number++) {
+                        chairs.add(new Chair(room, row, number, category));
+                    }
+                    category = NORMAL;
                 }
             }
 
