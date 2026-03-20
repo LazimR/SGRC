@@ -6,7 +6,7 @@ import Input from "../../ui/Input"
 import { useUser } from "../../../context/useUser"
 import { useNavigate } from "react-router-dom"
 import useFlashMessage from "../../../hooks/useFlashMessage"
-import { supabase } from "../../../services/requestApi"
+
 
 const registerSchema = z.object({
   username: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
@@ -34,20 +34,17 @@ function RegisterUser() {
   const { setFlashMessage } = useFlashMessage()
 
   async function onSubmit(form: RegisterFormData) {
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-    })
+
     const response = await registerUser({
       username: form.username,
-      email: data?.user?.email || form.email,
+      email: form.email,
       password: form.password,
       confirmPassword: form.confirmPassword,
     })
 
     if (response.success) {
-      setFlashMessage("success", response.message)
-      navigate("/dashboard")
+      setFlashMessage("success", "Usuário cadastrado com sucesso.")
+      navigate("/")
     } else {
       setFlashMessage("error", response.message || "Erro ao registrar usuário")
     }

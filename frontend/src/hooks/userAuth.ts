@@ -46,9 +46,9 @@ export default function useAuth({
       password: data.password,
       options: {
         data: {
-          username: data.username,
-        },
-      },
+          username: data.username
+        }
+      }
     })
 
     if (error) {
