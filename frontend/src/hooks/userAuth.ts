@@ -1,5 +1,6 @@
 import { useCallback } from "react"
 import { requestData } from "../services/requestApi"
+import { supabase } from "../services/requestApi"
 import type { ApiResponse } from "../types/api"
 import type { Client } from "../types/client/client"
 import type {
@@ -40,44 +41,60 @@ export default function useAuth({
 
 
   const register = useCallback(async (data: RegisterFormData) => {
-    const payload = {
-      username: data.username,
+    const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      confirmPassword: data.confirmPassword,
+      options: {
+        data: {
+          username: data.username,
+        },
+      },
+    })
+
+    if (error) {
+      return {
+        success: false,
+        message: error.message,
+      }
     }
 
-    const response = await requestData<RegisterResponse>(
-      "/register",
-      "POST",
-      payload,
-      true
-    )
-
-    if (response.success) {
-      setAuthenticated(true)
-      setUser(response.data ?? null)
+    return {
+      success: true,
+      data: authData.user,
+      message: "Usuário criado com sucesso",
     }
-
-    return response
   }, [])
 
 
 
   const login = useCallback(async (data: LoginData) => {
-    const response = await requestData<LoginResponse>(
-      "/login",
-      "POST",
-      data,
-      true
-    )
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    })
 
-    if (response.success) {
-      setAuthenticated(true)
-      setUser(response.data ?? null)
+    if (error) {
+      return {
+        success: false,
+        message: error.message,
+      }
     }
 
-    return response
+    if (authData.user) {
+      setAuthenticated(true)
+
+      setUser({
+        id: authData.user.id,
+        email: authData.user.email,
+        username: authData.user.user_metadata?.username ?? "",
+      } as Client)
+    }
+
+    return {
+      success: true,
+      data: authData.user,
+      message: "Login realizado com sucesso",
+    }
   }, [setAuthenticated, setUser])
 
 
