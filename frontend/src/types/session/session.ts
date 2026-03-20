@@ -1,8 +1,10 @@
-export interface Session {
+export type Session = {
   id: number
-  start_time: string
-  end_time: string
-  room_id: number
+  startTime: string
+  endTime: string
+  roomId: number
+  roomName: string
   movie: string
   genre: string
+  timeRange: string
 }
