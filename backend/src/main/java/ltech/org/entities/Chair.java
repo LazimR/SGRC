@@ -17,6 +17,7 @@ public class Chair {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChairType category;
     @ManyToOne
