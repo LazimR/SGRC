@@ -48,11 +48,7 @@ Desenvolvido com **Spring Boot** e containerizado com **Docker**.
 
 ### Instalação
 
-Entre na pasta do backend:
-
-```bash
-cd backend
-```
+na raiz do projeto:
 
 Suba os containers:
 
