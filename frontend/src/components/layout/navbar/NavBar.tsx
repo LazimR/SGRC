@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Menu as MenuIcon, X, Film, LogOut, User, Ticket, ChevronDown } from "lucide-react"
 import { useUser } from "../../../context/useUser"
 import useFlashMessage from "../../../hooks/useFlashMessage"
-import type { Client } from "../../../types/client/client"
+
 
 import { MobileDrawerMenu } from "./MobileDrawerMenu"
 
@@ -13,7 +13,6 @@ function NavBar() {
   const { setFlashMessage } = useFlashMessage()
 
   const [open, setOpen] = useState(false)
-  const [requestUser, setRequestUser] = useState<Client | null>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   useEffect(() => {
@@ -42,8 +41,7 @@ function NavBar() {
     }
   }
 
-  const displayName =
-    requestUser?.name ?? user?.name ?? user?.username ?? "Cliente"
+  const displayName = user?.name ?? user?.username ?? "Cliente"
 
   const initials = displayName
     .split(" ")
@@ -134,7 +132,7 @@ function NavBar() {
                           Meu Perfil
                         </Link>
                         <Link
-                          to="/reservations"
+                          to={`/reservations/${user?.id}`}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 transition-colors text-sm"
                         >
@@ -179,7 +177,7 @@ function NavBar() {
         <MobileDrawerMenu
           open={open}
           onClose={() => setOpen(false)}
-          user={requestUser}
+          user={user}
           onLogout={handleLogout}
         />
       )}

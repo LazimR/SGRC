@@ -1,17 +1,16 @@
-import {
-  User,
-  CalendarCheck,
-} from "lucide-react"
+import { User, CalendarCheck } from "lucide-react"
 
-export const MENU_ITEMS = [
-  {
-    label: "Meu Perfil",
-    to: "/profile",
-    icon: User,
-  },
-  {
-    label: "Minhas Reservas",
-    to: "/reservations",
-    icon: CalendarCheck,
-  },
-]
+export function getMenuItems(userId: string) {
+  return [
+    {
+      label: "Meu Perfil",
+      to: "/profile",
+      icon: User,
+    },
+    {
+      label: "Minhas Reservas",
+      to: `/reservations/${userId}`,
+      icon: CalendarCheck,
+    },
+  ]
+}

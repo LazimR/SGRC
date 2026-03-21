@@ -2,7 +2,7 @@ import { Fragment } from "react"
 import { Transition } from "@headlessui/react"
 import { Link } from "react-router-dom"
 import { LogOut, X, ChevronRight } from "lucide-react"
-import { MENU_ITEMS } from "./menuItems"
+import { getMenuItems } from "./menuItems"
 import type { Client } from "../../../types/client/client"
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export function MobileDrawerMenu({ open, onClose, user, onLogout }: Props) {
   const displayName = user?.name ?? user?.username ?? "Cliente"
+  const menuItems   = getMenuItems(user?.id ?? "")
 
   const initials = displayName
     .split(" ")
@@ -26,7 +27,6 @@ export function MobileDrawerMenu({ open, onClose, user, onLogout }: Props) {
     <Transition show={open} as={Fragment}>
       <div className="md:hidden fixed inset-0 z-50">
 
-        {/* Backdrop */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-200"
@@ -36,13 +36,9 @@ export function MobileDrawerMenu({ open, onClose, user, onLogout }: Props) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div
-            className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm"
-            onClick={onClose}
-          />
+          <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm" onClick={onClose} />
         </Transition.Child>
 
-        {/* Drawer panel */}
         <Transition.Child
           as={Fragment}
           enter="transform transition ease-out duration-250"
@@ -54,7 +50,6 @@ export function MobileDrawerMenu({ open, onClose, user, onLogout }: Props) {
         >
           <div className="fixed right-0 top-0 bottom-0 w-72 bg-zinc-950 border-l border-zinc-900 flex flex-col shadow-2xl shadow-black/60">
 
-            {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-900">
               <span className="text-white font-bold text-sm tracking-tight font-serif">
                 Cinema<span className="text-amber-500">Reserve</span>
@@ -67,10 +62,8 @@ export function MobileDrawerMenu({ open, onClose, user, onLogout }: Props) {
               </button>
             </div>
 
-            {/* User card */}
             <div className="px-4 py-4 border-b border-zinc-900">
               <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl px-4 py-3.5">
-                {/* Avatar */}
                 <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm shrink-0">
                   {initials}
                 </div>
@@ -81,10 +74,9 @@ export function MobileDrawerMenu({ open, onClose, user, onLogout }: Props) {
               </div>
             </div>
 
-            {/* Nav links */}
             <div className="flex-1 overflow-y-auto py-3 px-3">
               <div className="space-y-0.5">
-                {MENU_ITEMS.map(item => {
+                {menuItems.map(item => {
                   const Icon = item.icon
                   return (
                     <Link
@@ -111,7 +103,6 @@ export function MobileDrawerMenu({ open, onClose, user, onLogout }: Props) {
               </div>
             </div>
 
-            {/* Logout */}
             <div className="px-3 py-3 border-t border-zinc-900">
               <button
                 onClick={() => { onClose(); onLogout() }}

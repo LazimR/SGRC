@@ -12,6 +12,7 @@ import ClientRoutes from "./ClientRoutes"
 import SeatScreen from "../components/pages/seat/SeatManagement"
 import SessionsScreen from "../components/pages/session/Session"
 import ConfirmationScreen from "../components/pages/confirmation/Confirmation"
+import Reservations from "../components/pages/reservations/Reservations"
 
 export default function AppRoutes() {
   return (
@@ -22,6 +23,7 @@ export default function AppRoutes() {
           <Route path="/" element={<SessionsScreen />} />
           <Route path="/seats" element={<SeatScreen />} />
           <Route path="/confirmation" element={<ConfirmationScreen />} />
+          <Route path="/reservations/:id" element={<Reservations />} />
         </Route>
       </Route>
 
