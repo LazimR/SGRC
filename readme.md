@@ -1,6 +1,7 @@
 # CinemaReserve
 
 Sistema de reserva de assentos para cinema, com frontend em React e backend em Spring Boot.
+Com uso de Supabase para autenticação e geração de tokens JWT.
 
 ---
 
